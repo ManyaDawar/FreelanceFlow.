@@ -31,3 +31,12 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Local Spring Boot properties (do not push real credentials)
+src/main/resources/application.properties
+
+# Ignore generated/test files
+*.pdf
+src/main/resources/static/
+
+

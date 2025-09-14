@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-900 text-white flex">
+
+<!-- Sidebar -->
+<aside class="w-64 h-screen bg-gray-800 p-4 flex flex-col shadow-lg">
+    <div class="flex items-center mb-6">
+        <img th:src="@{/images/logo.png}" alt="Logo" class="w-8 h-8 mr-2">
+        <span class="text-lg font-bold">Freelancer Tracker</span>
+    </div>
+
+    <nav class="flex flex-col space-y-3">
+        <button onclick="showSection('dashboard')" class="hover:bg-gray-700 rounded px-3 py-2 text-left">Dashboard</button>
+        <button onclick="showSection('activity')" class="hover:bg-gray-700 rounded px-3 py-2 text-left">Activity</button>
+        <button onclick="showSection('invoices')" class="hover:bg-gray-700 rounded px-3 py-2 text-left">Invoices</button>
+        <button onclick="showSection('settings')" class="hover:bg-gray-700 rounded px-3 py-2 text-left">Settings</button>
+    </nav>
+</aside>
+
+<!-- Main Content -->
+<main class="flex-1 p-6 overflow-y-auto">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">Your Dashboard</h1>
+        <form th:action="@{/logout}" method="post">
+            <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition">Logout</button>
+        </form>
+    </div>
+
+    <!-- Worker Charts -->
+    <section id="worker-charts" class="mb-10">
+        <h2 class="text-xl font-semibold mb-4">Worker Insights</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <canvas id="workerHoursChart"></canvas>
+            <canvas id="workerEarningsChart"></canvas>
+            <canvas id="workerTrendChart"></canvas>
+        </div>
+    </section>
+
+    <!-- Client Charts -->
+    <section id="client-charts">
+        <h2 class="text-xl font-semibold mb-4">Client Insights</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <canvas id="clientPaymentsChart"></canvas>
+            <canvas id="clientProjectsChart"></canvas>
+            <canvas id="clientSpendingChart"></canvas>
+        </div>
+    </section>
+</main>
+
+<script>
+    async function fetchData(url) {
+      const response = await fetch(url);
+      return response.json();
+    }
+
+    async function renderCharts() {
+      // Worker Charts Data
+      const workerData = await fetchData("/api/workers/chartData");
+      const workerLabels = workerData.map(w => w.projectName);
+      const workerHours = workerData.map(w => w.hours);
+      const workerEarnings = workerData.map(w => w.earnings);
+
+      // Worker - Hours per project (Bar Chart)
+      new Chart(document.getElementById("workerHoursChart"), {
+        type: "bar",
+        data: { labels: workerLabels, datasets: [{ label: "Hours", data: workerHours, backgroundColor: "skyblue" }] }
+      });
+
+      // Worker - Earnings per project (Pie Chart)
+      new Chart(document.getElementById("workerEarningsChart"), {
+        type: "pie",
+        data: { labels: workerLabels, datasets: [{ label: "Earnings", data: workerEarnings, backgroundColor: ["#f87171","#34d399","#60a5fa","#fbbf24"] }] }
+      });
+
+      // Worker - Hours Trend (Line Chart)
+      new Chart(document.getElementById("workerTrendChart"), {
+        type: "line",
+        data: { labels: workerLabels, datasets: [{ label: "Hours Trend", data: workerHours, borderColor: "#10b981", fill: false }] }
+      });
+
+      // Client Charts Data
+      const clientData = await fetchData("/api/clients/chartData");
+      const clientLabels = clientData.map(c => c.projectName);
+      const clientPayments = clientData.map(c => c.payment);
+      const clientStatus = clientData.map(c => c.status);
+      const clientSpending = clientData.map(c => c.monthlySpending);
+
+      // Client - Payments per project (Bar Chart)
+      new Chart(document.getElementById("clientPaymentsChart"), {
+        type: "bar",
+        data: { labels: clientLabels, datasets: [{ label: "Payments", data: clientPayments, backgroundColor: "#a78bfa" }] }
+      });
+
+      // Client - Project Status Distribution (Pie Chart)
+      new Chart(document.getElementById("clientProjectsChart"), {
+        type: "pie",
+        data: { labels: clientLabels, datasets: [{ label: "Status", data: clientStatus, backgroundColor: ["#facc15","#4ade80","#f87171"] }] }
+      });
+
+      // Client - Monthly Spending (Line Chart)
+      new Chart(document.getElementById("clientSpendingChart"), {
+        type: "line",
+        data: { labels: clientLabels, datasets: [{ label: "Monthly Spending", data: clientSpending, borderColor: "#3b82f6", fill: false }] }
+      });
+    }
+
+    renderCharts();
+</script>
+
+<script src="/js/main.js"></script>
+</body>
+</html>
